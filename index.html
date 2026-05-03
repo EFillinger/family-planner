@@ -519,7 +519,11 @@
 <!-- ════════════════════════════════ OUR PLACES PANEL ════════════════════════════════ -->
 <div class="panel" id="panel-places">
   <div class="section-title">Our Places</div>
-  <div class="section-sub">Your family's curated list</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+    <div class="section-sub" style="margin-bottom:0;">Your family's curated list</div>
+    <button class="btn btn-ghost btn-sm" onclick="refreshPlaces(this)" style="font-size:12px;padding:6px 12px;">🔄 Refresh</button>
+  </div>
+  <div id="syncStatus" style="font-size:11px;color:var(--muted);margin-bottom:12px;"></div>
 
   <div class="filter-bar" id="filterBar">
     <div class="filter-chip active" onclick="filterPlaces('all', this)">All</div>
@@ -766,6 +770,8 @@ function init() {
   checkSetupBanner();
   // Auto-pull from Supabase on load
   setTimeout(loadFromSupabase, 1500);
+  // Auto-refresh every 30 seconds
+  startAutoRefresh();
 }
 
 function updatePlaceCount() {
@@ -984,12 +990,12 @@ function editPlace(id) {
   document.getElementById('addModal').classList.add('open');
 }
 
-function savePlace() {
+async function savePlace() {
   const name = document.getElementById('inp-name').value.trim();
   if (!name) { showToast('Please enter a place name'); return; }
 
   const place = {
-    id: editingId || Date.now().toString(),
+    id: editingId || (Date.now().toString() + Math.random().toString(36).slice(2)),
     name,
     location: document.getElementById('inp-location').value.trim(),
     type: document.getElementById('inp-type').value,
@@ -1008,10 +1014,12 @@ function savePlace() {
   }
 
   saveData();
-  syncToSheets(place);
   closeModal();
   renderPlaces();
-  showToast(editingId ? '✓ Place updated!' : '✓ Place saved!');
+  showToast('💾 Saving...');
+
+  await syncToSheets(place);
+  showToast(editingId ? '✓ Place updated & synced!' : '✓ Place saved & synced!');
 }
 
 function deletePlace(id) {
@@ -1115,6 +1123,11 @@ async function loadFromSupabase() {
       }
       saveData();
       renderPlaces();
+      const syncStatus = document.getElementById('syncStatus');
+      if (syncStatus) {
+        const now = new Date().toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'});
+        syncStatus.textContent = `Last synced at ${now} · ${remote.length} place${remote.length !== 1 ? 's' : ''} in cloud`;
+      }
       if (status) {
         status.textContent = `✓ Synced! ${remote.length} place${remote.length !== 1 ? 's' : ''} in cloud.`;
         status.style.color = 'var(--green)';
@@ -1126,7 +1139,20 @@ async function loadFromSupabase() {
   }
 }
 
-async function deleteFromSupabase(placeId) {
+async function refreshPlaces(btn) {
+  if (btn) { btn.textContent = '⏳ Syncing...'; btn.disabled = true; }
+  const status = document.getElementById('syncStatus');
+  if (status) { status.textContent = 'Syncing with cloud...'; }
+  await loadFromSupabase();
+  if (btn) { btn.textContent = '🔄 Refresh'; btn.disabled = false; }
+}
+
+function startAutoRefresh() {
+  // Silently sync every 30 seconds
+  setInterval(async () => {
+    await loadFromSupabase();
+  }, 30000);
+}
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/places?id=eq.${placeId}`, {
       method: 'DELETE',
