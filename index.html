@@ -585,27 +585,16 @@
     <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Sync your places to a Google Sheet so the whole family shares the same list. <strong>Optional</strong> — the app works without it using local browser storage.</p>
 
     <div class="form-group">
-      <label class="form-label">Spreadsheet ID</label>
-      <input type="text" class="form-input" id="sheetIdInput" placeholder="From your Sheet URL: /d/SPREADSHEET_ID/edit" />
+      <label class="form-label">Apps Script Web App URL</label>
+      <input type="text" class="form-input" id="sheetIdInput" placeholder="https://script.google.com/macros/s/..." />
     </div>
-    <div class="form-group">
-      <label class="form-label">Google Sheets API Key</label>
-      <input type="password" class="form-input" id="sheetsApiInput" placeholder="AIza..." />
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="testSheets()">Test Connection</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveSheetSettings()">Save</button>
+      <button class="btn btn-ghost btn-sm" onclick="syncAllToSheets()">⬆️ Push All Places</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadFromSheets()">⬇️ Pull From Sheet</button>
     </div>
-    <button class="btn btn-secondary btn-sm" onclick="testSheets()">Test Connection</button>
-    <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="saveSheetSettings()">Save</button>
-    <span id="sheetsStatus" style="font-size:12px;margin-left:10px;"></span>
-
-    <details style="margin-top:16px;">
-      <summary style="font-size:13px;font-weight:600;cursor:pointer;color:var(--accent);">📋 Setup Instructions</summary>
-      <div style="font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:10px;">
-        <strong>Step 1:</strong> Go to <a href="https://sheets.google.com" target="_blank" style="color:var(--accent);">sheets.google.com</a> and create a new spreadsheet named "Family Planner".<br><br>
-        <strong>Step 2:</strong> In Row 1, add these headers exactly: <code style="background:var(--cream);padding:2px 6px;border-radius:4px;">name | location | type | indoor_outdoor | description | rating | hours | added_by | date_added</code><br><br>
-        <strong>Step 3:</strong> Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent);">console.cloud.google.com</a> → Create project → Enable "Google Sheets API" → Create API Key → Restrict to Sheets API.<br><br>
-        <strong>Step 4:</strong> Make your sheet viewable: Share → "Anyone with the link" → Viewer.<br><br>
-        <strong>Step 5:</strong> Copy the Spreadsheet ID from the URL and paste both values above.
-      </div>
-    </details>
+    <div id="sheetsStatus" style="font-size:12px;margin-top:4px;"></div>
   </div>
 
   <!-- Family name -->
@@ -738,8 +727,7 @@ function saveSettings(obj) {
 }
 
 function getApiKey() { return loadSettings().apiKey || ''; }
-function getSheetId() { return loadSettings().sheetId || ''; }
-function getSheetsApiKey() { return loadSettings().sheetsApiKey || ''; }
+function getScriptUrl() { return loadSettings().scriptUrl || ''; }
 
 // ═══════════════════════════════════════════════════════════════
 // INIT
@@ -753,8 +741,7 @@ function init() {
     document.getElementById('apiKeyInput').value = settings.apiKey;
     document.getElementById('apiStatus').textContent = '✓ Key saved';
   }
-  if (settings.sheetId) document.getElementById('sheetIdInput').value = settings.sheetId;
-  if (settings.sheetsApiKey) document.getElementById('sheetsApiInput').value = settings.sheetsApiKey;
+  if (settings.scriptUrl) document.getElementById('sheetIdInput').value = settings.scriptUrl;
   if (settings.familyName) {
     document.getElementById('familyNameInput').value = settings.familyName;
     document.querySelector('.header-title').innerHTML = settings.familyName + '<span>✦</span>';
@@ -764,6 +751,10 @@ function init() {
   renderPlaces();
   fetchWeather();
   checkSetupBanner();
+  // Auto-pull from Sheets on load if configured
+  if (loadSettings().scriptUrl) {
+    setTimeout(loadFromSheets, 1500);
+  }
 }
 
 function updatePlaceCount() {
@@ -1043,53 +1034,110 @@ function updateIndoorOutdoor() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// GOOGLE SHEETS SYNC
+// GOOGLE SHEETS SYNC (via Apps Script)
 // ═══════════════════════════════════════════════════════════════
 async function syncToSheets(place) {
-  const sheetId = getSheetId();
-  const sheetsKey = getSheetsApiKey();
-  if (!sheetId || !sheetsKey) return;
-
+  const url = getScriptUrl();
+  if (!url) return;
   try {
-    const row = [place.name, place.location, place.type, place.indoorOutdoor, place.description, place.rating, place.hours, '', new Date().toLocaleDateString()];
-    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:I:append?valueInputOption=USER_ENTERED&key=${sheetsKey}`, {
+    await fetch(url, {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ values: [row] })
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'add',
+        name: place.name,
+        location: place.location,
+        type: place.type,
+        indoor_outdoor: place.indoorOutdoor,
+        description: place.description,
+        rating: place.rating,
+        hours: place.hours,
+        added_by: '',
+        date_added: place.dateAdded || new Date().toISOString()
+      })
     });
   } catch(e) { console.log('Sheets sync failed:', e); }
 }
 
-async function testSheets() {
-  const sheetId = document.getElementById('sheetIdInput').value.trim();
-  const key = document.getElementById('sheetsApiInput').value.trim();
+async function syncAllToSheets() {
+  const url = getScriptUrl();
   const status = document.getElementById('sheetsStatus');
-  if (!sheetId || !key) { status.textContent = '⚠️ Enter both values'; status.style.color = 'var(--accent)'; return; }
-  status.textContent = 'Testing...'; status.style.color = 'var(--muted)';
+  if (!url) { status.textContent = '⚠️ No URL saved'; status.style.color = 'var(--accent)'; return; }
+  status.textContent = 'Pushing all places...'; status.style.color = 'var(--muted)';
+  let count = 0;
+  for (const place of places) {
+    await syncToSheets(place);
+    count++;
+  }
+  status.textContent = `✓ Pushed ${count} places to Sheet!`; status.style.color = 'var(--green)';
+}
+
+async function loadFromSheets() {
+  const url = getScriptUrl();
+  const status = document.getElementById('sheetsStatus');
+  if (!url) { status.textContent = '⚠️ No URL saved'; status.style.color = 'var(--accent)'; return; }
+  status.textContent = 'Pulling from Sheet...'; status.style.color = 'var(--muted)';
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?key=${key}`;
     const r = await fetch(url);
     const data = await r.json();
-    if (r.ok) {
-      status.textContent = `✓ Connected! Found: "${data.properties?.title || 'Sheet'}"`;
-      status.style.color = 'var(--green)';
+    if (data.status === 'ok' && Array.isArray(data.data)) {
+      const imported = data.data
+        .filter(row => row.name)
+        .map(row => ({
+          id: Date.now().toString() + Math.random().toString(36).slice(2),
+          name: row.name || '',
+          location: row.location || '',
+          type: row.type || 'Other',
+          indoorOutdoor: row.indoor_outdoor || '',
+          description: row.description || '',
+          rating: parseInt(row.rating) || 0,
+          hours: row.hours || '',
+          dateAdded: row.date_added || new Date().toISOString()
+        }));
+      // Merge — add any that aren't already saved locally by name
+      let added = 0;
+      for (const p of imported) {
+        if (!places.find(x => x.name.toLowerCase() === p.name.toLowerCase())) {
+          places.push(p);
+          added++;
+        }
+      }
+      saveData();
+      renderPlaces();
+      status.textContent = `✓ Pulled ${imported.length} places (${added} new added)`; status.style.color = 'var(--green)';
     } else {
-      const errMsg = data.error?.message || data.error?.status || 'Unknown error';
-      const errCode = data.error?.code || r.status;
-      status.textContent = `✗ Error ${errCode}: ${errMsg}`;
-      status.style.color = 'var(--accent)';
-      console.log('Sheets error details:', JSON.stringify(data));
+      status.textContent = '✗ Unexpected response from Sheet'; status.style.color = 'var(--accent)';
     }
   } catch(e) {
-    status.textContent = `✗ Network error: ${e.message}`;
+    status.textContent = `✗ Pull failed: ${e.message}`; status.style.color = 'var(--accent)';
+  }
+}
+
+async function testSheets() {
+  const url = document.getElementById('sheetIdInput').value.trim();
+  const status = document.getElementById('sheetsStatus');
+  if (!url) { status.textContent = '⚠️ Enter your Apps Script URL first'; status.style.color = 'var(--accent)'; return; }
+  status.textContent = 'Testing...'; status.style.color = 'var(--muted)';
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+    if (data.status === 'ok') {
+      const count = data.data?.length || 0;
+      status.textContent = `✓ Connected! Sheet has ${count} place${count !== 1 ? 's' : ''}.`;
+      status.style.color = 'var(--green)';
+    } else {
+      status.textContent = '✗ Connected but unexpected response';
+      status.style.color = 'var(--accent)';
+    }
+  } catch(e) {
+    status.textContent = `✗ Error: ${e.message}`;
     status.style.color = 'var(--accent)';
-    console.log('Fetch error:', e);
   }
 }
 
 function saveSheetSettings() {
-  saveSettings({ sheetId: document.getElementById('sheetIdInput').value.trim(), sheetsApiKey: document.getElementById('sheetsApiInput').value.trim() });
-  showToast('✓ Sheet settings saved');
+  saveSettings({ scriptUrl: document.getElementById('sheetIdInput').value.trim() });
+  showToast('✓ Script URL saved');
 }
 
 // ═══════════════════════════════════════════════════════════════
