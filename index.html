@@ -727,7 +727,20 @@ function saveSettings(obj) {
 }
 
 function getApiKey() { return loadSettings().apiKey || ''; }
-function getScriptUrl() { return loadSettings().scriptUrl || ''; }
+
+// ═══════════════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// ═══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://opdrfqvybqayxddpchhb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZHJmcXZ5YnFheXhkZHBjaGhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MTk1NzksImV4cCI6MjA5MzM5NTU3OX0.7XMidGgH1rjKufe7MiAlH2DbCXXkpUKLZFM4RvbPl-Y';
+function sbHeaders() {
+  return {
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_KEY,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  };
+}
 
 // ═══════════════════════════════════════════════════════════════
 // INIT
@@ -751,10 +764,8 @@ function init() {
   renderPlaces();
   fetchWeather();
   checkSetupBanner();
-  // Auto-pull from Sheets on load if configured
-  if (loadSettings().scriptUrl) {
-    setTimeout(loadFromSheets, 1500);
-  }
+  // Auto-pull from Supabase on load
+  setTimeout(loadFromSupabase, 1500);
 }
 
 function updatePlaceCount() {
@@ -1005,6 +1016,7 @@ function savePlace() {
 
 function deletePlace(id) {
   if (!confirm('Remove this place?')) return;
+  deleteFromSupabase(id);
   places = places.filter(p => p.id !== id);
   saveData();
   renderPlaces();
@@ -1034,110 +1046,116 @@ function updateIndoorOutdoor() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// GOOGLE SHEETS SYNC (via Apps Script)
+// SUPABASE SYNC
 // ═══════════════════════════════════════════════════════════════
 async function syncToSheets(place) {
-  const url = getScriptUrl();
-  if (!url) return;
+  // Called whenever a place is saved — upsert to Supabase
   try {
-    await fetch(url, {
+    await fetch(`${SUPABASE_URL}/rest/v1/places`, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      headers: { ...sbHeaders(), 'Prefer': 'resolution=merge-duplicates,return=representation' },
       body: JSON.stringify({
-        action: 'add',
+        id: place.id,
         name: place.name,
-        location: place.location,
-        type: place.type,
-        indoor_outdoor: place.indoorOutdoor,
-        description: place.description,
-        rating: place.rating,
-        hours: place.hours,
-        added_by: '',
+        location: place.location || '',
+        type: place.type || 'Other',
+        indoor_outdoor: place.indoorOutdoor || '',
+        description: place.description || '',
+        rating: place.rating || 0,
+        hours: place.hours || '',
         date_added: place.dateAdded || new Date().toISOString()
       })
     });
-  } catch(e) { console.log('Sheets sync failed:', e); }
+  } catch(e) { console.log('Supabase sync failed:', e); }
 }
 
-async function syncAllToSheets() {
-  const url = getScriptUrl();
+async function syncAllToSupabase() {
   const status = document.getElementById('sheetsStatus');
-  if (!url) { status.textContent = '⚠️ No URL saved'; status.style.color = 'var(--accent)'; return; }
   status.textContent = 'Pushing all places...'; status.style.color = 'var(--muted)';
-  let count = 0;
-  for (const place of places) {
-    await syncToSheets(place);
-    count++;
+  try {
+    for (const place of places) { await syncToSheets(place); }
+    status.textContent = `✓ Pushed ${places.length} places to cloud!`; status.style.color = 'var(--green)';
+  } catch(e) {
+    status.textContent = `✗ Push failed: ${e.message}`; status.style.color = 'var(--accent)';
   }
-  status.textContent = `✓ Pushed ${count} places to Sheet!`; status.style.color = 'var(--green)';
 }
 
-async function loadFromSheets() {
-  const url = getScriptUrl();
+async function loadFromSupabase() {
   const status = document.getElementById('sheetsStatus');
-  if (!url) { status.textContent = '⚠️ No URL saved'; status.style.color = 'var(--accent)'; return; }
-  status.textContent = 'Pulling from Sheet...'; status.style.color = 'var(--muted)';
+  if (status) { status.textContent = 'Syncing...'; status.style.color = 'var(--muted)'; }
   try {
-    const r = await fetch(url);
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/places?select=*&order=date_added.asc`, {
+      headers: sbHeaders()
+    });
+    if (!r.ok) {
+      const err = await r.text();
+      if (status) { status.textContent = `✗ Sync error: ${r.status}`; status.style.color = 'var(--accent)'; }
+      console.log('Supabase error:', err);
+      return;
+    }
     const data = await r.json();
-    if (data.status === 'ok' && Array.isArray(data.data)) {
-      const imported = data.data
-        .filter(row => row.name)
-        .map(row => ({
-          id: Date.now().toString() + Math.random().toString(36).slice(2),
-          name: row.name || '',
-          location: row.location || '',
-          type: row.type || 'Other',
-          indoorOutdoor: row.indoor_outdoor || '',
-          description: row.description || '',
-          rating: parseInt(row.rating) || 0,
-          hours: row.hours || '',
-          dateAdded: row.date_added || new Date().toISOString()
-        }));
-      // Merge — add any that aren't already saved locally by name
+    if (Array.isArray(data)) {
+      const remote = data.filter(row => row.name).map(row => ({
+        id: row.id,
+        name: row.name || '',
+        location: row.location || '',
+        type: row.type || 'Other',
+        indoorOutdoor: row.indoor_outdoor || '',
+        description: row.description || '',
+        rating: parseInt(row.rating) || 0,
+        hours: row.hours || '',
+        dateAdded: row.date_added || new Date().toISOString()
+      }));
+      // Merge remote into local — remote wins for matching IDs
       let added = 0;
-      for (const p of imported) {
-        if (!places.find(x => x.name.toLowerCase() === p.name.toLowerCase())) {
-          places.push(p);
-          added++;
-        }
+      for (const p of remote) {
+        const idx = places.findIndex(x => x.id === p.id);
+        if (idx >= 0) { places[idx] = p; }
+        else { places.push(p); added++; }
       }
       saveData();
       renderPlaces();
-      status.textContent = `✓ Pulled ${imported.length} places (${added} new added)`; status.style.color = 'var(--green)';
-    } else {
-      status.textContent = '✗ Unexpected response from Sheet'; status.style.color = 'var(--accent)';
+      if (status) {
+        status.textContent = `✓ Synced! ${remote.length} place${remote.length !== 1 ? 's' : ''} in cloud.`;
+        status.style.color = 'var(--green)';
+      }
     }
   } catch(e) {
-    status.textContent = `✗ Pull failed: ${e.message}`; status.style.color = 'var(--accent)';
+    if (status) { status.textContent = `✗ Sync failed: ${e.message}`; status.style.color = 'var(--accent)'; }
+    console.log('Supabase load error:', e);
   }
 }
 
-async function testSheets() {
-  const url = document.getElementById('sheetIdInput').value.trim();
-  const status = document.getElementById('sheetsStatus');
-  if (!url) { status.textContent = '⚠️ Enter your Apps Script URL first'; status.style.color = 'var(--accent)'; return; }
-  status.textContent = 'Testing...'; status.style.color = 'var(--muted)';
+async function deleteFromSupabase(placeId) {
   try {
-    const r = await fetch(url);
-    const data = await r.json();
-    if (data.status === 'ok') {
-      const count = data.data?.length || 0;
-      status.textContent = `✓ Connected! Sheet has ${count} place${count !== 1 ? 's' : ''}.`;
+    await fetch(`${SUPABASE_URL}/rest/v1/places?id=eq.${placeId}`, {
+      method: 'DELETE',
+      headers: sbHeaders()
+    });
+  } catch(e) { console.log('Supabase delete failed:', e); }
+}
+
+async function testSupabase() {
+  const status = document.getElementById('sheetsStatus');
+  status.textContent = 'Testing connection...'; status.style.color = 'var(--muted)';
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/places?select=count`, {
+      headers: sbHeaders()
+    });
+    if (r.ok) {
+      const data = await r.json();
+      const count = Array.isArray(data) ? data.length : 0;
+      status.textContent = `✓ Connected! ${count} place${count !== 1 ? 's' : ''} in cloud.`;
       status.style.color = 'var(--green)';
     } else {
-      status.textContent = '✗ Connected but unexpected response';
+      const err = await r.text();
+      status.textContent = `✗ Error ${r.status}: ${err.slice(0,80)}`;
       status.style.color = 'var(--accent)';
     }
   } catch(e) {
-    status.textContent = `✗ Error: ${e.message}`;
+    status.textContent = `✗ Failed: ${e.message}`;
     status.style.color = 'var(--accent)';
   }
-}
-
-function saveSheetSettings() {
-  saveSettings({ scriptUrl: document.getElementById('sheetIdInput').value.trim() });
-  showToast('✓ Script URL saved');
 }
 
 // ═══════════════════════════════════════════════════════════════
