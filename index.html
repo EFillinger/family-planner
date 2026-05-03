@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Family Planner ✦</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --warm-white: #FFFEF9;
+    --ink: #1A1714;
+    --ink-soft: #3D3830;
+    --muted: #9B9188;
+    --accent: #C9613A;
+    --accent-light: #F0D5C8;
+    --accent-dark: #A04A2A;
+    --gold: #D4A843;
+    --gold-light: #F5E6C0;
+    --green: #4A7C59;
+    --green-light: #D4E8DB;
+    --blue: #3A6080;
+    --blue-light: #D0E0EB;
+    --border: #E8E0D5;
+    --shadow: 0 2px 20px rgba(26,23,20,0.08);
+    --shadow-lg: 0 8px 40px rgba(26,23,20,0.14);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 18px 20px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header-title span { color: var(--gold); }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .settings-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: var(--cream);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── NAV TABS ── */
+  .nav {
+    display: flex;
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: 64px;
+    z-index: 99;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    flex: 1;
+    min-width: 75px;
+    padding: 12px 8px 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .nav-tab .tab-icon { font-size: 18px; display: block; margin-bottom: 2px; }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── PANELS ── */
+  .panel { display: none; padding: 20px 16px 100px; }
+  .panel.active { display: block; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .section-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 20px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:active { background: var(--accent-dark); transform: scale(0.97); }
+  .btn-secondary { background: var(--ink); color: white; }
+  .btn-secondary:active { transform: scale(0.97); }
+  .btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--border); }
+  .btn-ghost:active { background: var(--border); }
+  .btn-full { width: 100%; }
+  .btn-sm { padding: 8px 14px; font-size: 13px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--warm-white);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .card-name { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; }
+  .card-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--cream); border: 1px solid var(--border);
+    font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .tag {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 20px; letter-spacing: 0.3px;
+  }
+  .tag-type { background: var(--gold-light); color: #7A5A1A; }
+  .tag-indoor { background: var(--blue-light); color: var(--blue); }
+  .tag-outdoor { background: var(--green-light); color: var(--green); }
+  .tag-weather { background: var(--accent-light); color: var(--accent-dark); }
+  .card-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 8px; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; }
+  .card-location { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .card-hours { font-size: 11px; color: var(--muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .hours-warning { color: var(--accent); }
+
+  /* ── STARS ── */
+  .stars { display: flex; gap: 2px; }
+  .star { font-size: 16px; cursor: pointer; transition: transform 0.1s; color: #DDD; }
+  .star.filled { color: var(--gold); }
+  .star:active { transform: scale(1.3); }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: var(--warm-white);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .indoor-outdoor-toggle { display: flex; gap: 8px; }
+  .toggle-opt {
+    flex: 1; padding: 10px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); text-align: center;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    background: var(--warm-white); color: var(--muted);
+    transition: all 0.2s;
+  }
+  .toggle-opt.active-indoor { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+  .toggle-opt.active-outdoor { border-color: var(--green); background: var(--green-light); color: var(--green); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,23,20,0.5);
+    z-index: 200; display: flex; align-items: flex-end;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--warm-white);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+
+  /* ── AI PANEL ── */
+  .weather-bar {
+    background: var(--ink);
+    color: var(--cream);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .weather-icon { font-size: 28px; }
+  .weather-info { flex: 1; }
+  .weather-temp { font-size: 20px; font-weight: 600; }
+  .weather-desc { font-size: 12px; color: var(--muted); }
+  .weather-location { font-size: 11px; color: var(--muted); }
+
+  .ai-chat-box {
+    background: var(--warm-white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .ai-prompt-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .ai-textarea {
+    width: 100%; border: none; outline: none; resize: none;
+    font-family: 'DM Sans', sans-serif; font-size: 15px;
+    background: transparent; color: var(--ink); line-height: 1.5;
+    min-height: 60px;
+  }
+  .ai-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .ai-chip {
+    padding: 7px 14px; border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    background: var(--warm-white); color: var(--ink-soft);
+    transition: all 0.18s;
+  }
+  .ai-chip.selected { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* ── SUGGESTION CARDS (swipeable) ── */
+  .swipe-container {
+    position: relative;
+    height: 320px;
+    margin-bottom: 16px;
+  }
+  .swipe-card {
+    position: absolute;
+    width: 100%;
+    background: var(--warm-white);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+    touch-action: pan-y;
+  }
+  .swipe-card.top { z-index: 3; }
+  .swipe-card.mid { z-index: 2; transform: scale(0.96) translateY(8px); }
+  .swipe-card.back { z-index: 1; transform: scale(0.92) translateY(16px); }
+  .swipe-hint { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .swipe-name { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .swipe-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.5; margin-bottom: 12px; }
+  .swipe-footer { display: flex; gap: 8px; flex-wrap: wrap; }
+  .swipe-actions { display: flex; justify-content: center; gap: 16px; margin-top: 8px; }
+  .swipe-btn {
+    width: 56px; height: 56px; border-radius: 50%; border: none;
+    font-size: 22px; cursor: pointer; box-shadow: var(--shadow);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.15s;
+  }
+  .swipe-btn:active { transform: scale(0.9); }
+  .swipe-skip { background: white; }
+  .swipe-save { background: var(--accent); }
+  .swipe-counter { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* ── AI LOADING ── */
+  .ai-loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 0;
+    gap: 12px;
+  }
+  .ai-loading.visible { display: flex; }
+  .loading-dots { display: flex; gap: 6px; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s infinite ease-in-out;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+  .ai-loading-text { font-size: 13px; color: var(--muted); }
+
+  /* ── AI RESPONSE TEXT ── */
+  .ai-response {
+    background: var(--warm-white);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    display: none;
+  }
+  .ai-response.visible { display: block; }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--ink); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; line-height: 1.5; }
+
+  /* ── SETTINGS ── */
+  .settings-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .settings-label { font-size: 14px; font-weight: 500; }
+  .settings-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .settings-input {
+    background: var(--cream); border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    color: var(--ink); outline: none; width: 200px;
+  }
+  .settings-input:focus { border-color: var(--accent); }
+
+  /* ── FILTER BAR ── */
+  .filter-bar { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 16px; padding-bottom: 2px; }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    white-space: nowrap; padding: 7px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    background: var(--warm-white); color: var(--ink-soft);
+    border: 1.5px solid var(--border); transition: all 0.18s;
+  }
+  .filter-chip.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: white;
+    padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 500;
+    opacity: 0; transition: all 0.3s; z-index: 500;
+    pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── FAB ── */
+  .fab {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: white;
+    font-size: 24px; border: none; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(201,97,58,0.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 150; transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.92); }
+  .fab.hidden { display: none; }
+
+  /* ── SETUP BANNER ── */
+  .setup-banner {
+    background: linear-gradient(135deg, var(--ink) 0%, #3D3830 100%);
+    color: var(--cream);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .setup-banner.visible { display: block; }
+  .setup-banner h3 { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 6px; }
+  .setup-banner p { font-size: 12px; color: #B0A898; line-height: 1.5; margin-bottom: 12px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-title">Family<span>✦</span>Planner</div>
+    <div class="header-sub" id="placeCount">Loading...</div>
+  </div>
+  <button class="settings-btn" onclick="showPanel('settings')">⚙️</button>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-tab active" onclick="showPanel('discover')" id="tab-discover">
+    <span class="tab-icon">✨</span>Discover
+  </button>
+  <button class="nav-tab" onclick="showPanel('places')" id="tab-places">
+    <span class="tab-icon">📍</span>Our Places
+  </button>
+  <button class="nav-tab" onclick="showPanel('decide')" id="tab-decide">
+    <span class="tab-icon">🎯</span>Decide
+  </button>
+  <button class="nav-tab" onclick="showPanel('settings')" id="tab-settings">
+    <span class="tab-icon">⚙️</span>Setup
+  </button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- FAB (Add Place) -->
+<button class="fab" id="fab" onclick="openAddModal()">+</button>
+
+<!-- ════════════════════════════════ DISCOVER PANEL ════════════════════════════════ -->
+<div class="panel active" id="panel-discover">
+  <div class="section-title">Discover</div>
+  <div class="section-sub">AI-powered suggestions just for your family</div>
+
+  <!-- Setup banner -->
+  <div class="setup-banner" id="setup-banner">
+    <h3>⚡ Almost ready!</h3>
+    <p>Add your Anthropic API key in Settings to unlock AI suggestions. The weather widget and your saved places work without it.</p>
+    <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.3);color:var(--cream);" onclick="showPanel('settings')">Go to Settings →</button>
+  </div>
+
+  <!-- Weather -->
+  <div class="weather-bar" id="weatherBar">
+    <div class="weather-icon" id="weatherIcon">🌤️</div>
+    <div class="weather-info">
+      <div class="weather-temp" id="weatherTemp">--°F</div>
+      <div class="weather-desc" id="weatherDesc">Loading weather...</div>
+    </div>
+    <div>
+      <div class="weather-location" id="weatherLocation">📍 Detecting...</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px;font-size:11px;padding:4px 10px;" onclick="promptWeatherLocation()">Change</button>
+    </div>
+  </div>
+
+  <!-- AI Chat Box -->
+  <div class="ai-chat-box">
+    <div class="ai-prompt-label">✦ Ask your family AI</div>
+    <textarea class="ai-textarea" id="aiPrompt" placeholder="e.g. We want something fun for a rainy Sunday with kids, not too far from downtown..." rows="3"></textarea>
+  </div>
+
+  <!-- Quick chips -->
+  <div class="ai-options">
+    <div class="ai-chip" onclick="toggleChip(this,'🍽️ Dinner tonight')">🍽️ Dinner tonight</div>
+    <div class="ai-chip" onclick="toggleChip(this,'☀️ Outdoor fun')">☀️ Outdoor fun</div>
+    <div class="ai-chip" onclick="toggleChip(this,'🏛️ Culture & arts')">🏛️ Culture & arts</div>
+    <div class="ai-chip" onclick="toggleChip(this,'👨‍👩‍👧 Family friendly')">👨‍👩‍👧 Family friendly</div>
+    <div class="ai-chip" onclick="toggleChip(this,'🌧️ Rainy day')">🌧️ Rainy day</div>
+    <div class="ai-chip" onclick="toggleChip(this,'🎉 Special occasion')">🎉 Special occasion</div>
+  </div>
+
+  <button class="btn btn-primary btn-full" onclick="runAI()" id="aiBtn">✨ Get Suggestions</button>
+
+  <!-- Loading -->
+  <div class="ai-loading" id="aiLoading">
+    <div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="ai-loading-text">Searching your places + the web...</div>
+  </div>
+
+  <!-- AI text response -->
+  <div class="ai-response" id="aiResponse"></div>
+
+  <!-- Swipe cards -->
+  <div id="swipeArea" style="display:none;">
+    <div class="swipe-container" id="swipeContainer"></div>
+    <div class="swipe-actions">
+      <button class="swipe-btn swipe-skip" onclick="swipeCard('skip')" title="Skip">👋</button>
+      <button class="swipe-btn swipe-save" onclick="swipeCard('save')" title="Save to Our Places">💾</button>
+    </div>
+    <div class="swipe-counter" id="swipeCounter"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ OUR PLACES PANEL ════════════════════════════════ -->
+<div class="panel" id="panel-places">
+  <div class="section-title">Our Places</div>
+  <div class="section-sub">Your family's curated list</div>
+
+  <div class="filter-bar" id="filterBar">
+    <div class="filter-chip active" onclick="filterPlaces('all', this)">All</div>
+    <div class="filter-chip" onclick="filterPlaces('Restaurant', this)">🍽️ Restaurants</div>
+    <div class="filter-chip" onclick="filterPlaces('Museum', this)">🏛️ Museums</div>
+    <div class="filter-chip" onclick="filterPlaces('Park', this)">🌿 Parks</div>
+    <div class="filter-chip" onclick="filterPlaces('Entertainment', this)">🎭 Entertainment</div>
+    <div class="filter-chip" onclick="filterPlaces('Shopping', this)">🛍️ Shopping</div>
+    <div class="filter-chip" onclick="filterPlaces('Other', this)">✦ Other</div>
+  </div>
+
+  <div id="placesList"></div>
+</div>
+
+<!-- ════════════════════════════════ DECIDE PANEL ════════════════════════════════ -->
+<div class="panel" id="panel-decide">
+  <div class="section-title">Help Us Decide</div>
+  <div class="section-sub">Let AI pick the perfect option for today</div>
+
+  <div class="ai-chat-box">
+    <div class="ai-prompt-label">🎯 Tell us about today</div>
+    <textarea class="ai-textarea" id="decidePrompt" placeholder="e.g. It's Saturday afternoon, there are 3 of us, we want something we haven't done in a while, maybe outdoors if weather is nice..." rows="4"></textarea>
+  </div>
+
+  <div class="ai-options" id="decideChips">
+    <div class="ai-chip" onclick="toggleChip(this,'Just 2 of us')">💑 Just 2 of us</div>
+    <div class="ai-chip" onclick="toggleChip(this,'Whole family')">👨‍👩‍👧 Whole family</div>
+    <div class="ai-chip" onclick="toggleChip(this,'Low energy / relaxed vibe')">😌 Low energy</div>
+    <div class="ai-chip" onclick="toggleChip(this,'Active / adventurous')">🏃 Active</div>
+    <div class="ai-chip" onclick="toggleChip(this,'Budget-friendly')">💰 Budget-friendly</div>
+    <div class="ai-chip" onclick="toggleChip(this,'Treat ourselves')">✨ Treat ourselves</div>
+  </div>
+
+  <button class="btn btn-secondary btn-full" onclick="runDecide()" style="margin-bottom:12px;">🎯 Pick Something For Us</button>
+
+  <div class="ai-loading" id="decideLoading">
+    <div class="loading-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="ai-loading-text">Checking weather + your saved places...</div>
+  </div>
+
+  <div class="ai-response" id="decideResponse"></div>
+</div>
+
+<!-- ════════════════════════════════ SETTINGS PANEL ════════════════════════════════ -->
+<div class="panel" id="panel-settings">
+  <div class="section-title">Setup</div>
+  <div class="section-sub">Configure your family planner</div>
+
+  <!-- API Key -->
+  <div class="card">
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;margin-bottom:8px;">🔑 Anthropic API Key</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Required for AI suggestions. Get your free key at <strong>console.anthropic.com</strong>. Your key is stored only in this browser.</p>
+    <div class="form-group">
+      <input type="password" class="form-input" id="apiKeyInput" placeholder="sk-ant-..." />
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Save Key</button>
+    <span id="apiStatus" style="font-size:12px;margin-left:10px;color:var(--green);"></span>
+  </div>
+
+  <!-- Google Sheets -->
+  <div class="card">
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;margin-bottom:8px;">📊 Google Sheets Sync</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px;">Sync your places to a Google Sheet so the whole family shares the same list. <strong>Optional</strong> — the app works without it using local browser storage.</p>
+
+    <div class="form-group">
+      <label class="form-label">Spreadsheet ID</label>
+      <input type="text" class="form-input" id="sheetIdInput" placeholder="From your Sheet URL: /d/SPREADSHEET_ID/edit" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Google Sheets API Key</label>
+      <input type="password" class="form-input" id="sheetsApiInput" placeholder="AIza..." />
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="testSheets()">Test Connection</button>
+    <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="saveSheetSettings()">Save</button>
+    <span id="sheetsStatus" style="font-size:12px;margin-left:10px;"></span>
+
+    <details style="margin-top:16px;">
+      <summary style="font-size:13px;font-weight:600;cursor:pointer;color:var(--accent);">📋 Setup Instructions</summary>
+      <div style="font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:10px;">
+        <strong>Step 1:</strong> Go to <a href="https://sheets.google.com" target="_blank" style="color:var(--accent);">sheets.google.com</a> and create a new spreadsheet named "Family Planner".<br><br>
+        <strong>Step 2:</strong> In Row 1, add these headers exactly: <code style="background:var(--cream);padding:2px 6px;border-radius:4px;">name | location | type | indoor_outdoor | description | rating | hours | added_by | date_added</code><br><br>
+        <strong>Step 3:</strong> Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent);">console.cloud.google.com</a> → Create project → Enable "Google Sheets API" → Create API Key → Restrict to Sheets API.<br><br>
+        <strong>Step 4:</strong> Make your sheet viewable: Share → "Anyone with the link" → Viewer.<br><br>
+        <strong>Step 5:</strong> Copy the Spreadsheet ID from the URL and paste both values above.
+      </div>
+    </details>
+  </div>
+
+  <!-- Family name -->
+  <div class="card">
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;margin-bottom:12px;">👨‍👩‍👧 Family Settings</div>
+    <div class="form-group">
+      <label class="form-label">Family Name (shown in header)</label>
+      <input type="text" class="form-input" id="familyNameInput" placeholder="The Smiths" />
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="saveFamilyName()">Save</button>
+  </div>
+
+  <!-- Data -->
+  <div class="card">
+    <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:600;margin-bottom:12px;">💾 Local Data</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Your places are stored in this browser. Export to back them up.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇️ Export JSON</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">⬆️ Import JSON</button>
+      <input type="file" id="importFile" style="display:none;" accept=".json" onchange="importData(event)">
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════ ADD/EDIT MODAL ════════════════════════════════ -->
+<div class="modal-overlay" id="addModal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Add a Place</div>
+
+    <input type="hidden" id="editingId">
+
+    <div class="form-group">
+      <label class="form-label">Place Name *</label>
+      <input type="text" class="form-input" id="inp-name" placeholder="e.g. The Pittsburgh Zoo" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Location / Address</label>
+      <input type="text" class="form-input" id="inp-location" placeholder="e.g. 7370 Baker St, Pittsburgh, PA" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-select" id="inp-type">
+          <option>Restaurant</option>
+          <option>Museum</option>
+          <option>Park</option>
+          <option>Entertainment</option>
+          <option>Shopping</option>
+          <option>Cafe</option>
+          <option>Bar</option>
+          <option>Sports</option>
+          <option>Beach</option>
+          <option>Hiking</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Indoor / Outdoor</label>
+        <div class="indoor-outdoor-toggle">
+          <div class="toggle-opt" id="tog-indoor" onclick="setIndoorOutdoor('indoor')">🏠 Indoor</div>
+          <div class="toggle-opt" id="tog-outdoor" onclick="setIndoorOutdoor('outdoor')">🌿 Out</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hours of Operation</label>
+      <input type="text" class="form-input" id="inp-hours" placeholder="e.g. Mon–Fri 11am–9pm, Closed Sun" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description / Notes</label>
+      <textarea class="form-textarea" id="inp-desc" placeholder="What makes this place special? Tips, things to know..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Your Rating</label>
+      <div class="stars" id="ratingStars">
+        <span class="star" onclick="setRating(1)">★</span>
+        <span class="star" onclick="setRating(2)">★</span>
+        <span class="star" onclick="setRating(3)">★</span>
+        <span class="star" onclick="setRating(4)">★</span>
+        <span class="star" onclick="setRating(5)">★</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="savePlace()">Save Place</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE & STORAGE
+// ═══════════════════════════════════════════════════════════════
+let places = [];
+let currentFilter = 'all';
+let currentRating = 0;
+let currentIndoorOutdoor = '';
+let editingId = null;
+let weatherData = null;
+let swipeCards = [];
+let swipeIndex = 0;
+
+const STORAGE_KEY = 'familyPlanner_places';
+const SETTINGS_KEY = 'familyPlanner_settings';
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    places = raw ? JSON.parse(raw) : [];
+  } catch(e) { places = []; }
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
+  updatePlaceCount();
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function saveSettings(obj) {
+  const current = loadSettings();
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({...current, ...obj}));
+}
+
+function getApiKey() { return loadSettings().apiKey || ''; }
+function getSheetId() { return loadSettings().sheetId || ''; }
+function getSheetsApiKey() { return loadSettings().sheetsApiKey || ''; }
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+function init() {
+  loadData();
+  const settings = loadSettings();
+
+  // Restore settings fields
+  if (settings.apiKey) {
+    document.getElementById('apiKeyInput').value = settings.apiKey;
+    document.getElementById('apiStatus').textContent = '✓ Key saved';
+  }
+  if (settings.sheetId) document.getElementById('sheetIdInput').value = settings.sheetId;
+  if (settings.sheetsApiKey) document.getElementById('sheetsApiInput').value = settings.sheetsApiKey;
+  if (settings.familyName) {
+    document.getElementById('familyNameInput').value = settings.familyName;
+    document.querySelector('.header-title').innerHTML = settings.familyName + '<span>✦</span>';
+  }
+
+  updatePlaceCount();
+  renderPlaces();
+  fetchWeather();
+  checkSetupBanner();
+}
+
+function updatePlaceCount() {
+  const c = places.length;
+  document.getElementById('placeCount').textContent = c === 0 ? 'No places saved yet' : `${c} place${c !== 1 ? 's' : ''} saved`;
+}
+
+function checkSetupBanner() {
+  const banner = document.getElementById('setup-banner');
+  if (!getApiKey()) banner.classList.add('visible');
+  else banner.classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('active');
+
+  const fab = document.getElementById('fab');
+  fab.classList.toggle('hidden', name !== 'places');
+
+  if (name === 'places') renderPlaces();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WEATHER
+// ═══════════════════════════════════════════════════════════════
+async function fetchWeather(lat, lon) {
+  try {
+    if (!lat || !lon) {
+      // Try geolocation
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+          () => fetchWeatherByCity('Pittsburgh,PA')
+        );
+        return;
+      } else {
+        fetchWeatherByCity('Pittsburgh,PA');
+        return;
+      }
+    }
+
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit&hourly=precipitation_probability&forecast_days=1`);
+    const d = await r.json();
+    const cw = d.current_weather;
+    weatherData = { temp: Math.round(cw.temperature), code: cw.weathercode, lat, lon };
+    updateWeatherUI();
+
+    // Reverse geocode (free nominatim)
+    try {
+      const geo = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const gd = await geo.json();
+      const city = gd.address?.city || gd.address?.town || gd.address?.state || '';
+      document.getElementById('weatherLocation').textContent = '📍 ' + city;
+      if (weatherData) weatherData.city = city;
+    } catch(e) {}
+
+  } catch(e) {
+    document.getElementById('weatherDesc').textContent = 'Weather unavailable';
+  }
+}
+
+async function fetchWeatherByCity(city) {
+  try {
+    const geo = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+    const gd = await geo.json();
+    if (gd.length > 0) {
+      fetchWeather(parseFloat(gd[0].lat), parseFloat(gd[0].lon));
+    }
+  } catch(e) {}
+}
+
+function promptWeatherLocation() {
+  const city = prompt('Enter a city or location:', weatherData?.city || '');
+  if (city) fetchWeatherByCity(city);
+}
+
+const weatherIcons = {
+  0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+  45:'🌫️', 48:'🌫️',
+  51:'🌦️', 53:'🌦️', 55:'🌧️',
+  61:'🌧️', 63:'🌧️', 65:'🌧️',
+  71:'🌨️', 73:'🌨️', 75:'❄️',
+  80:'🌦️', 81:'🌧️', 82:'⛈️',
+  95:'⛈️', 96:'⛈️', 99:'⛈️'
+};
+const weatherDescs = {
+  0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
+  45:'Foggy', 48:'Freezing fog',
+  51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle',
+  61:'Light rain', 63:'Moderate rain', 65:'Heavy rain',
+  71:'Light snow', 73:'Moderate snow', 75:'Heavy snow',
+  80:'Light showers', 81:'Rain showers', 82:'Violent showers',
+  95:'Thunderstorm', 96:'Thunderstorm w/ hail', 99:'Heavy thunderstorm'
+};
+
+function updateWeatherUI() {
+  if (!weatherData) return;
+  const icon = weatherIcons[weatherData.code] || '🌡️';
+  const desc = weatherDescs[weatherData.code] || 'Unknown';
+  document.getElementById('weatherIcon').textContent = icon;
+  document.getElementById('weatherTemp').textContent = weatherData.temp + '°F';
+  document.getElementById('weatherDesc').textContent = desc;
+}
+
+function getWeatherSummary() {
+  if (!weatherData) return 'Weather unknown.';
+  const desc = weatherDescs[weatherData.code] || 'unclear';
+  const outdoor = weatherData.code <= 2 ? 'Good for outdoor activities.' :
+                  weatherData.code <= 48 ? 'Marginal for outdoors.' : 'Better for indoor activities.';
+  return `Current weather: ${weatherData.temp}°F, ${desc}. ${outdoor}`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLACES — RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderPlaces() {
+  const list = document.getElementById('placesList');
+  let filtered = currentFilter === 'all' ? places : places.filter(p => p.type === currentFilter);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">🗺️</div>
+      <div class="empty-title">No places yet</div>
+      <div class="empty-sub">Tap the + button to add your first place, or use Discover to find ideas.</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.sort((a,b) => (b.rating||0)-(a.rating||0)).map(p => placeCard(p)).join('');
+}
+
+function placeCard(p) {
+  const stars = Array.from({length:5}, (_,i) =>
+    `<span class="star ${i < (p.rating||0) ? 'filled' : ''}">★</span>`).join('');
+
+  const ioTag = p.indoorOutdoor === 'indoor'
+    ? `<span class="tag tag-indoor">🏠 Indoor</span>`
+    : p.indoorOutdoor === 'outdoor'
+    ? `<span class="tag tag-outdoor">🌿 Outdoor</span>` : '';
+
+  const hoursHtml = p.hours
+    ? `<div class="card-hours">🕐 ${p.hours} <span class="hours-warning">· Verify before visiting</span></div>` : '';
+
+  return `<div class="card">
+    <div class="card-header">
+      <div class="card-name">${p.name}</div>
+      <div class="card-actions">
+        <button class="icon-btn" onclick="editPlace('${p.id}')" title="Edit">✏️</button>
+        <button class="icon-btn" onclick="deletePlace('${p.id}')" title="Delete">🗑️</button>
+      </div>
+    </div>
+    <div class="card-meta">
+      <span class="tag tag-type">${p.type || 'Other'}</span>
+      ${ioTag}
+    </div>
+    ${p.description ? `<div class="card-desc">${p.description}</div>` : ''}
+    ${hoursHtml}
+    <div class="card-footer">
+      <div class="card-location">📍 ${p.location || 'No location'}</div>
+      <div class="stars">${stars}</div>
+    </div>
+  </div>`;
+}
+
+function filterPlaces(type, el) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderPlaces();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLACES — ADD / EDIT / DELETE
+// ═══════════════════════════════════════════════════════════════
+function openAddModal(prefill) {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Add a Place';
+  document.getElementById('editingId').value = '';
+  ['name','location','hours','desc'].forEach(f => document.getElementById('inp-'+f).value = '');
+  document.getElementById('inp-type').value = 'Restaurant';
+  currentRating = 0; updateStars();
+  currentIndoorOutdoor = '';
+  updateIndoorOutdoor();
+
+  if (prefill) {
+    if (prefill.name) document.getElementById('inp-name').value = prefill.name;
+    if (prefill.location) document.getElementById('inp-location').value = prefill.location;
+    if (prefill.type) document.getElementById('inp-type').value = prefill.type;
+    if (prefill.description) document.getElementById('inp-desc').value = prefill.description;
+    if (prefill.indoorOutdoor) { currentIndoorOutdoor = prefill.indoorOutdoor; updateIndoorOutdoor(); }
+  }
+
+  document.getElementById('addModal').classList.add('open');
+}
+
+function editPlace(id) {
+  const p = places.find(x => x.id === id);
+  if (!p) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Place';
+  document.getElementById('inp-name').value = p.name || '';
+  document.getElementById('inp-location').value = p.location || '';
+  document.getElementById('inp-type').value = p.type || 'Restaurant';
+  document.getElementById('inp-hours').value = p.hours || '';
+  document.getElementById('inp-desc').value = p.description || '';
+  currentRating = p.rating || 0; updateStars();
+  currentIndoorOutdoor = p.indoorOutdoor || '';
+  updateIndoorOutdoor();
+  document.getElementById('addModal').classList.add('open');
+}
+
+function savePlace() {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { showToast('Please enter a place name'); return; }
+
+  const place = {
+    id: editingId || Date.now().toString(),
+    name,
+    location: document.getElementById('inp-location').value.trim(),
+    type: document.getElementById('inp-type').value,
+    indoorOutdoor: currentIndoorOutdoor,
+    hours: document.getElementById('inp-hours').value.trim(),
+    description: document.getElementById('inp-desc').value.trim(),
+    rating: currentRating,
+    dateAdded: editingId ? undefined : new Date().toISOString()
+  };
+
+  if (editingId) {
+    const idx = places.findIndex(p => p.id === editingId);
+    if (idx >= 0) { place.dateAdded = places[idx].dateAdded; places[idx] = place; }
+  } else {
+    places.push(place);
+  }
+
+  saveData();
+  syncToSheets(place);
+  closeModal();
+  renderPlaces();
+  showToast(editingId ? '✓ Place updated!' : '✓ Place saved!');
+}
+
+function deletePlace(id) {
+  if (!confirm('Remove this place?')) return;
+  places = places.filter(p => p.id !== id);
+  saveData();
+  renderPlaces();
+  showToast('Place removed');
+}
+
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+function closeModalOutside(e) { if (e.target === document.getElementById('addModal')) closeModal(); }
+
+function setRating(r) {
+  currentRating = r;
+  updateStars();
+}
+function updateStars() {
+  document.querySelectorAll('#ratingStars .star').forEach((s,i) => {
+    s.classList.toggle('filled', i < currentRating);
+  });
+}
+
+function setIndoorOutdoor(v) {
+  currentIndoorOutdoor = currentIndoorOutdoor === v ? '' : v;
+  updateIndoorOutdoor();
+}
+function updateIndoorOutdoor() {
+  document.getElementById('tog-indoor').classList.toggle('active-indoor', currentIndoorOutdoor === 'indoor');
+  document.getElementById('tog-outdoor').classList.toggle('active-outdoor', currentIndoorOutdoor === 'outdoor');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ═══════════════════════════════════════════════════════════════
+async function syncToSheets(place) {
+  const sheetId = getSheetId();
+  const sheetsKey = getSheetsApiKey();
+  if (!sheetId || !sheetsKey) return;
+
+  try {
+    const row = [place.name, place.location, place.type, place.indoorOutdoor, place.description, place.rating, place.hours, '', new Date().toLocaleDateString()];
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:I:append?valueInputOption=USER_ENTERED&key=${sheetsKey}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ values: [row] })
+    });
+  } catch(e) { console.log('Sheets sync failed:', e); }
+}
+
+async function testSheets() {
+  const sheetId = document.getElementById('sheetIdInput').value.trim();
+  const key = document.getElementById('sheetsApiInput').value.trim();
+  const status = document.getElementById('sheetsStatus');
+  if (!sheetId || !key) { status.textContent = '⚠️ Enter both values'; status.style.color = 'var(--accent)'; return; }
+  status.textContent = 'Testing...'; status.style.color = 'var(--muted)';
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}?key=${key}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (r.ok) {
+      status.textContent = `✓ Connected! Found: "${data.properties?.title || 'Sheet'}"`;
+      status.style.color = 'var(--green)';
+    } else {
+      const errMsg = data.error?.message || data.error?.status || 'Unknown error';
+      const errCode = data.error?.code || r.status;
+      status.textContent = `✗ Error ${errCode}: ${errMsg}`;
+      status.style.color = 'var(--accent)';
+      console.log('Sheets error details:', JSON.stringify(data));
+    }
+  } catch(e) {
+    status.textContent = `✗ Network error: ${e.message}`;
+    status.style.color = 'var(--accent)';
+    console.log('Fetch error:', e);
+  }
+}
+
+function saveSheetSettings() {
+  saveSettings({ sheetId: document.getElementById('sheetIdInput').value.trim(), sheetsApiKey: document.getElementById('sheetsApiInput').value.trim() });
+  showToast('✓ Sheet settings saved');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS SAVES
+// ═══════════════════════════════════════════════════════════════
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  saveSettings({ apiKey: key });
+  document.getElementById('apiStatus').textContent = key ? '✓ Key saved' : 'Cleared';
+  checkSetupBanner();
+  showToast('✓ API key saved');
+}
+
+function saveFamilyName() {
+  const name = document.getElementById('familyNameInput').value.trim();
+  saveSettings({ familyName: name });
+  if (name) document.querySelector('.header-title').innerHTML = name + '<span>✦</span>';
+  showToast('✓ Name saved');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════════════
+function exportData() {
+  const blob = new Blob([JSON.stringify(places, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'family-planner-backup.json';
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (Array.isArray(imported)) {
+        places = [...places, ...imported.filter(p => !places.find(x => x.id === p.id))];
+        saveData();
+        renderPlaces();
+        showToast(`✓ Imported ${imported.length} places`);
+      }
+    } catch(e) { showToast('Invalid file'); }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI CHIPS
+// ═══════════════════════════════════════════════════════════════
+function toggleChip(el, label) {
+  el.classList.toggle('selected');
+}
+
+function getSelectedChips(container) {
+  const chips = container ? container.querySelectorAll('.ai-chip.selected') : document.querySelectorAll('.ai-chip.selected');
+  return Array.from(chips).map(c => c.textContent.trim());
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI — DISCOVER
+// ═══════════════════════════════════════════════════════════════
+async function runAI() {
+  const apiKey = getApiKey();
+  if (!apiKey) { showPanel('settings'); showToast('Please add your API key first'); return; }
+
+  const prompt = document.getElementById('aiPrompt').value.trim();
+  const chips = Array.from(document.querySelectorAll('#panel-discover .ai-chip.selected')).map(c => c.textContent.trim());
+  const combined = [prompt, ...chips].filter(Boolean).join(', ') || 'Suggest some fun activities for our family today.';
+
+  const savedSummary = places.length > 0
+    ? `Our saved places include: ${places.slice(0,10).map(p=>`${p.name} (${p.type}, ${p.indoorOutdoor||'?'}, rated ${p.rating||'?'}/5)`).join('; ')}.`
+    : 'We have no saved places yet.';
+
+  const systemPrompt = `You are a friendly family activity assistant. Help suggest great places and activities.
+
+${savedSummary}
+${getWeatherSummary()}
+
+Based on this, suggest 4 great options. Respond ONLY in JSON, no markdown, like:
+{"intro":"brief friendly intro sentence","suggestions":[{"name":"Place Name","type":"Restaurant","indoorOutdoor":"indoor","description":"Why this is great for them today, 2 sentences","location":"City, State","hours":"Hours if known","weatherFit":"Why weather works/doesn't work for this"}]}`;
+
+  document.getElementById('aiLoading').classList.add('visible');
+  document.getElementById('swipeArea').style.display = 'none';
+  document.getElementById('aiResponse').classList.remove('visible');
+  document.getElementById('aiBtn').disabled = true;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: combined }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+
+    document.getElementById('aiResponse').textContent = parsed.intro || '';
+    document.getElementById('aiResponse').classList.add('visible');
+
+    swipeCards = parsed.suggestions || [];
+    swipeIndex = 0;
+    buildSwipeCards();
+
+  } catch(e) {
+    document.getElementById('aiResponse').textContent = 'Sorry, something went wrong. Please check your API key and try again.';
+    document.getElementById('aiResponse').classList.add('visible');
+  } finally {
+    document.getElementById('aiLoading').classList.remove('visible');
+    document.getElementById('aiBtn').disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SWIPE CARDS
+// ═══════════════════════════════════════════════════════════════
+function buildSwipeCards() {
+  if (swipeCards.length === 0) return;
+  document.getElementById('swipeArea').style.display = 'block';
+  renderSwipeCards();
+}
+
+function renderSwipeCards() {
+  const container = document.getElementById('swipeContainer');
+  const remaining = swipeCards.slice(swipeIndex);
+  if (remaining.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--muted);">
+      <div style="font-size:32px;margin-bottom:8px;">🎉</div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--ink);">All done!</div>
+      <div style="font-size:13px;margin-top:4px;">Run another search to see more ideas.</div>
+    </div>`;
+    document.getElementById('swipeCounter').textContent = '';
+    return;
+  }
+
+  container.innerHTML = remaining.slice(0,3).reverse().map((card, ri) => {
+    const position = ['back','mid','top'][ri] || 'back';
+    const ioTag = card.indoorOutdoor === 'indoor'
+      ? `<span class="tag tag-indoor">🏠 Indoor</span>`
+      : card.indoorOutdoor === 'outdoor'
+      ? `<span class="tag tag-outdoor">🌿 Outdoor</span>` : '';
+    return `<div class="swipe-card ${position}">
+      <div class="swipe-hint"><span>${card.type || ''}</span><span>${card.location || ''}</span></div>
+      <div class="swipe-name">${card.name}</div>
+      <div class="swipe-desc">${card.description}</div>
+      <div class="swipe-footer">
+        ${ioTag}
+        ${card.weatherFit ? `<span class="tag tag-weather">🌤️ ${card.weatherFit}</span>` : ''}
+      </div>
+      ${card.hours ? `<div style="font-size:11px;color:var(--muted);margin-top:8px;">🕐 ${card.hours}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('swipeCounter').textContent = `${swipeIndex + 1} of ${swipeCards.length}`;
+}
+
+function swipeCard(action) {
+  if (swipeIndex >= swipeCards.length) return;
+  const card = swipeCards[swipeIndex];
+  if (action === 'save') {
+    openAddModal({
+      name: card.name,
+      location: card.location,
+      type: card.type,
+      description: card.description,
+      indoorOutdoor: card.indoorOutdoor
+    });
+  }
+  swipeIndex++;
+  renderSwipeCards();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI — DECIDE
+// ═══════════════════════════════════════════════════════════════
+async function runDecide() {
+  const apiKey = getApiKey();
+  if (!apiKey) { showPanel('settings'); showToast('Please add your API key first'); return; }
+
+  const prompt = document.getElementById('decidePrompt').value.trim();
+  const chips = Array.from(document.querySelectorAll('#panel-decide .ai-chip.selected')).map(c => c.textContent.trim());
+  const combined = [prompt, ...chips].filter(Boolean).join(', ') || 'Help us decide what to do today.';
+
+  const savedList = places.length > 0
+    ? places.map(p=>`- ${p.name} | ${p.type} | ${p.indoorOutdoor||'?'} | Rating: ${p.rating||'?'}/5 | Hours: ${p.hours||'unknown'} | ${p.description||''}`).join('\n')
+    : 'No saved places yet.';
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'});
+  const dayStr = now.toLocaleDateString('en-US', {weekday:'long'});
+
+  const systemPrompt = `You are a warm, helpful family activity assistant. Today is ${dayStr} at ${timeStr}.
+
+WEATHER: ${getWeatherSummary()}
+
+SAVED FAMILY PLACES:
+${savedList}
+
+Your job: pick 1–2 SPECIFIC recommendations from their saved list (or suggest a new one if the list is short/empty). Be decisive, warm, and specific. Mention the weather fit. Note if today's hours need checking. Keep response under 200 words. Format with clear recommendation + reasoning.`;
+
+  document.getElementById('decideLoading').classList.add('visible');
+  document.getElementById('decideResponse').classList.remove('visible');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: combined }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Unable to get a recommendation right now.';
+    document.getElementById('decideResponse').textContent = text;
+    document.getElementById('decideResponse').classList.add('visible');
+
+  } catch(e) {
+    document.getElementById('decideResponse').textContent = 'Something went wrong. Please check your API key.';
+    document.getElementById('decideResponse').classList.add('visible');
+  } finally {
+    document.getElementById('decideLoading').classList.remove('visible');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
